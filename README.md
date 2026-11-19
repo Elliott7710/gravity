@@ -4,6 +4,16 @@ A scroll-driven studio landing page with a live 3D scene. As you scroll, a clust
 
 Built by AI from a prompt found online. Copy it, open it, or paste it into your own AI and make it yours, with no need to build it from scratch.
 
+---
+## Website details
+| Field | Details |
+|---|---|
+| Website name | Diet Soda |
+| Website link | https://gravity-prompt.netlify.app |
+| GitHub Repository | https://github.com/Elliott7710/gravity |
+---
+
+
 ## Features
 
 - Three.js scene with simulated physics: mass, collisions, bounce, floor, and mouse repulsion
