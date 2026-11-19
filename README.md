@@ -69,4 +69,5 @@ Quick way: paste `index.html` into your AI and say what you want, for example *"
 
 ## Credits
 
-Original prompt: _add the source link here_
+Original prompt will be in PROMPT.md
+
