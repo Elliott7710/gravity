@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f7fafc">
+  <title>GRAVITY — Digital Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&family=Raleway:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <script type="importmap">
+    {"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}
+  </script>
+  <style>
+    :root{
+      --font-sans:"Inter";--font-display:"Space Grotesk";--font-mono:"JetBrains Mono";--font-raleway:"Raleway";
+      --blue:#0E2AC5;--ink:#1a1a1a;
+    }
+    html,body{margin:0;padding:0;width:100%}
+    body{overflow-x:hidden;-webkit-font-smoothing:antialiased;color:var(--ink);background:#f7fafc}
+    ::-webkit-scrollbar{width:8px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(14,42,197,.18);border-radius:99px}
+    ::-webkit-scrollbar-thumb:hover{background:rgba(14,42,197,.32)}
+    *{box-sizing:border-box}
+    a{color:inherit;text-decoration:none}
+    button{font:inherit;color:inherit}
+    .gradient-bg{position:fixed;inset:0;z-index:-10;background:radial-gradient(circle at center,#fff 0%,#ecefff 35%,#c2d1ff 100%);transition:background 1.2s cubic-bezier(.65,0,.35,1)}
+    #scene-wrap{position:fixed;inset:0;z-index:0;pointer-events:none}
+    #scene{width:100%;height:100%;display:block;pointer-events:none}
+    main,footer{position:relative}
+    section{position:relative;z-index:10;min-height:100svh;pointer-events:none}
+    section>*{pointer-events:auto}
+
+    .header{position:fixed;z-index:30;top:0;left:0;width:100%;height:80px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;pointer-events:none;opacity:0;transform:translateY(-16px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
+    .header.ready{opacity:1;transform:translateY(0)}
+    .header>*{pointer-events:auto}
+    .wordmark{font-family:var(--font-display);font-weight:900;font-size:18px;letter-spacing:.25em}
+    nav{display:none;align-items:center;gap:48px;font-family:var(--font-raleway);font-size:14px;font-weight:500}
+    nav a{transition:opacity .2s}nav a:hover{opacity:.6}
+    .controls-right{display:flex;align-items:center;gap:10px}
+    .glass-button{width:40px;height:40px;border:1px solid rgba(255,255,255,.4);border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.2);backdrop-filter:blur(20px);box-shadow:inset 0 1.5px 2px rgba(255,255,255,.7),0 8px 30px rgba(0,0,0,.04);cursor:pointer}
+    .glass-button:hover{background:rgba(255,255,255,.3)}
+    .glass-button svg{width:16px;height:16px}
+    .contact-pill{height:44px;padding:6px 6px 6px 20px;border-radius:99px;display:flex;align-items:center;gap:12px;font-family:var(--font-raleway);font-size:13px;font-weight:500;background:rgba(255,255,255,.12);backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.9);border-bottom:1px solid rgba(255,255,255,.85);border-left:1px solid rgba(255,255,255,.1);border-right:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1.5px 2px rgba(255,255,255,.7)}
+    .orb{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;background:radial-gradient(circle at 50% 30%,#5175ff 0%,#0e2ac5 55%,#020b40 100%);flex:none;transition:transform .25s}
+    .contact-pill:hover .orb{transform:scale(1.05)}
+    .orb svg{width:16px;height:16px}
+
+    .hero{display:flex;align-items:flex-end;padding:48px 24px 48px}
+    .hero-row{width:100%;display:flex;flex-direction:column;justify-content:space-between;gap:32px}
+    .hero-left{display:flex;flex-direction:column;align-items:flex-start}
+    .eyebrow{font-family:var(--font-raleway);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--blue);margin-bottom:24px}
+    .hero h1,.drop h2,.form h2,.release h2,.footer-cta h2{font-family:var(--font-raleway);font-weight:500;letter-spacing:-.055em;margin:0}
+    .hero h1{font-size:2.6rem;line-height:.95}
+    .hero-copy{max-width:260px;font-family:var(--font-raleway);font-size:15px;font-weight:500;line-height:1.35}
+    .credit{margin:20px 0 0;font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#737373}
+    .scroll-cue{display:none;align-items:center;gap:8px;margin-top:16px;color:#737373;font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase}
+    .scroll-cue svg{width:14px;height:14px;animation:pulse 2s infinite}
+    @keyframes pulse{50%{opacity:.35}}
+    .hero-in{opacity:0;transform:translateY(22px);filter:blur(6px);transition:opacity 1s cubic-bezier(.16,1,.3,1),transform 1s cubic-bezier(.16,1,.3,1),filter 1s cubic-bezier(.16,1,.3,1)}
+    .hero.ready .hero-in{opacity:1;transform:translateY(0);filter:blur(0)}
+    .hero.ready .eyebrow{transition-delay:.15s}.hero.ready h1{transition-delay:.28s}.hero.ready .hero-copy-wrap{transition-delay:.45s}
+
+    .drop{display:flex;align-items:center;padding:128px 24px 160px}
+    .drop-grid{display:grid;grid-template-columns:1fr;gap:40px;width:100%;align-items:start}
+    .mono-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:rgba(14,42,197,.8)}
+    .drop h2,.form h2{margin-top:24px;font-size:2.6rem;line-height:1}
+    .drop-copy{max-width:32rem;margin-top:32px;font-family:var(--font-raleway);font-size:16px;line-height:1.55;color:#404040}
+    .stats{display:flex;flex-direction:column;gap:14px}
+    .stat-card{padding:1px;border-radius:22px;background:linear-gradient(to bottom,rgba(255,255,255,.8),rgba(255,255,255,.3) 60%,rgba(255,255,255,.1));box-shadow:0 14px 40px -12px rgba(14,42,197,.18);transition:transform .25s}
+    .stat-card:hover{transform:translateY(-2px)}
+    .stat-inner{position:relative;overflow:hidden;border-radius:21px;background:rgba(255,255,255,.25);backdrop-filter:blur(20px);padding:20px 24px}
+    .stat-inner:before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent)}
+    .stat-head{display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;color:#737373}
+    .stat-dot{margin-left:auto;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#5175ff,#0e2ac5);box-shadow:0 0 8px rgba(47,105,255,.6)}
+    .stat-value{margin-top:12px;font-family:var(--font-raleway);font-size:18px;font-weight:600}
+    .stat-desc{margin-top:4px;font-family:var(--font-raleway);font-size:13px;color:#737373}
+
+    .form{display:flex;flex-direction:column;justify-content:space-between;padding:144px 24px}
+    .form-bottom{align-self:flex-end;max-width:384px}
+    .form-copy{font-family:var(--font-raleway);font-size:16px;line-height:1.55;color:#404040;text-align:left}
+    .swipe-pill{display:inline-flex;align-items:center;gap:8px;margin-top:28px;padding:10px 16px;border:1px solid rgba(255,255,255,.55);border-radius:99px;background:rgba(255,255,255,.35);backdrop-filter:blur(12px);font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#404040}
+    .swipe-pill svg{width:14px;height:14px}
+
+    .release{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:144px 24px}
+    .release h2{margin-top:28px;font-size:2.8rem;line-height:1}
+    .release-copy{max-width:448px;margin:32px auto 0;font-family:var(--font-raleway);font-size:16px;line-height:1.55;color:#404040}
+
+    .reveal{opacity:0;transform:translateY(42px);filter:blur(8px);transition:opacity 1.5s cubic-bezier(.16,1,.3,1),transform 1.5s cubic-bezier(.16,1,.3,1),filter 1.5s cubic-bezier(.16,1,.3,1)}
+    .reveal.visible{opacity:1;transform:translateY(0);filter:blur(0)}
+
+    footer{z-index:10;overflow:hidden;border-radius:40px 40px 0 0;background:#0a0a0a;color:#fff}
+    .footer-glow-one,.footer-glow-two{position:absolute;border-radius:50%;pointer-events:none;filter:blur(32px)}
+    .footer-glow-one{width:28rem;height:28rem;right:-10rem;top:-8rem;background:radial-gradient(circle,#2f69ff66 0%,transparent 65%)}
+    .footer-glow-two{width:32rem;height:32rem;left:-12rem;bottom:-12rem;background:radial-gradient(circle,#5175ff44 0%,transparent 65%)}
+    .marquee{border-bottom:1px solid rgba(255,255,255,.10);padding:20px 0;overflow:hidden;position:relative}
+    .marquee-track{display:flex;width:max-content;animation:marquee 26s linear infinite}
+    .marquee-group{display:flex;align-items:center;white-space:nowrap}
+    .marquee-word{font-family:var(--font-raleway);font-size:clamp(28px,6vw,64px);font-weight:500;color:rgba(255,255,255,.9);padding:0 32px}
+    .marquee-dot{width:10px;height:10px;border-radius:50%;background:#2f69ff;flex:none}
+    @keyframes marquee{to{transform:translateX(-50%)}}
+    .footer-body{position:relative;padding:64px 24px 40px}
+    .footer-grid{display:grid;grid-template-columns:1fr;gap:48px}
+    .footer-cta h2{margin:28px 0 24px;font-size:36px;line-height:.95}
+    .footer-label,.link-title{font-family:var(--font-mono);font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:rgba(255,255,255,.4)}
+    .footer-label{font-size:11px}
+    .email-pill{display:inline-flex;align-items:center;gap:16px;padding:8px 8px 8px 28px;border:1px solid rgba(255,255,255,.15);border-radius:99px;background:rgba(255,255,255,.05);font-family:var(--font-raleway);font-size:16px;font-weight:500}
+    .email-pill:hover{background:rgba(255,255,255,.10)}
+    .email-pill .orb{width:40px;height:40px}
+    .email-pill .orb svg{transition:transform .25s}.email-pill:hover .orb svg{transform:rotate(45deg)}
+    .footer-links{display:grid;grid-template-columns:repeat(2,1fr);gap:32px}
+    .footer-column ul{list-style:none;margin:24px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+    .footer-column a{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-raleway);font-size:15px;color:rgba(255,255,255,.75)}
+    .footer-column a:hover{color:#fff}
+    .footer-column a svg{width:12px;height:12px;opacity:0;transform:translate(-4px,4px);transition:.2s}
+    .footer-column a:hover svg{opacity:1;transform:translate(0,0)}
+    .footer-bottom{margin-top:80px;padding-top:28px;border-top:1px solid rgba(255,255,255,.10);display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .footer-brand{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+    .footer-brand .wordmark{font-size:16px;letter-spacing:.22em}
+    .footer-dot{width:8px;height:8px;border-radius:50%;background:#2f69ff}
+    .copyright{font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,.4)}
+    .socials{display:flex;gap:8px}
+    .social-button{width:40px;height:40px;border:1px solid rgba(255,255,255,.15);border-radius:50%;display:grid;place-items:center;color:rgba(255,255,255,.7)}
+    .social-button:hover{color:#fff}.social-button svg{width:16px;height:16px}
+
+    .loader{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(circle at 50% 42%,#fff 0%,#eef2ff 45%,#dbe4ff 100%);transition:opacity .55s cubic-bezier(.65,0,.35,1);opacity:1}
+    .loader.leaving{opacity:0;pointer-events:none}
+    .loader-inner{display:flex;flex-direction:column;align-items:center;gap:26px}
+    .loader-status,.loader-counter{font-family:var(--font-mono)}
+    .loader-status{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:#6b7bb5}
+    .progress-track{width:clamp(180px,32vw,280px);height:2px;border-radius:99px;background:rgba(14,42,197,.14);overflow:hidden}
+    .progress-fill{width:0;height:100%;border-radius:99px;background:linear-gradient(90deg,#5175ff,#0e2ac5);box-shadow:0 0 14px rgba(47,105,255,.55);transition:width .45s cubic-bezier(.16,1,.3,1)}
+    .loader-counter{font-size:11px;letter-spacing:.1em;font-weight:700;color:#0e2ac5;font-variant-numeric:tabular-nums}
+    .loader-spring{opacity:0;transform:translateY(18px);filter:blur(6px)}
+    .loader-spring.entered{animation:loaderSpring 1s cubic-bezier(.16,1,.3,1) forwards}
+    @keyframes loaderSpring{to{opacity:1;transform:translateY(0);filter:blur(0)}}
+
+    .scrim{position:fixed;inset:0;z-index:40;background:rgba(10,10,10,.4);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .35s}
+    .scrim.open{opacity:1;pointer-events:auto}
+    .drawer{position:fixed;z-index:50;right:0;top:0;width:100%;height:100%;max-width:420px;padding:32px;background:rgba(255,255,255,.95);backdrop-filter:blur(20px);border-left:1px solid #f5f5f5;transform:translateX(100%);transition:transform .45s cubic-bezier(.16,1,.3,1);display:flex;flex-direction:column}
+    .drawer.open{transform:translateX(0)}
+    .drawer-head{display:flex;align-items:center;justify-content:space-between}
+    .drawer-title{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:14px;font-weight:900;letter-spacing:.2em;text-transform:uppercase}
+    .drawer-title svg{width:18px;height:18px}
+    .close-button{width:40px;height:40px;border:1px solid #e5e5e5;border-radius:50%;display:grid;place-items:center;background:#fff;cursor:pointer}
+    .close-button svg{width:16px;height:16px}
+    .drawer-note{margin:32px 0 24px;font-family:var(--font-mono);font-size:12px;font-style:italic;color:#a3a3a3}
+    .palette-title{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase}
+    .palette-title svg{width:14px;height:14px}
+    .palette-list{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+    .palette-card{border:1px solid #e5e5e5;border-radius:12px;padding:16px;background:#fff;cursor:pointer;text-align:left;transition:.25s}
+    .palette-card.selected{background:#0a0a0a;color:#fff;border-color:#0a0a0a;transform:scale(1.02)}
+    .palette-name-row{display:flex;align-items:center;justify-content:space-between;font-family:var(--font-raleway);font-size:12px;font-weight:700}
+    .palette-swatch{width:12px;height:12px;border-radius:50%}
+    .palette-desc{display:block;margin-top:6px;font-family:var(--font-raleway);font-size:10px;opacity:.65}
+    .drawer-footer{margin-top:auto;border-top:1px solid #eee;padding-top:20px}
+    .render-row{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9px;color:#a3a3a3;margin-bottom:8px}
+    .reset-button{margin-top:16px;width:100%;height:44px;border:1px solid #ddd;border-radius:99px;background:#fff;display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;cursor:pointer}
+    .reset-button svg{width:14px;height:14px}
+
+    @media(min-width:768px){
+      .header{height:96px;padding:0 48px}.wordmark{font-size:20px}.glass-button{width:44px;height:44px}.controls-right{gap:12px}.contact-pill{font-size:14px;padding-left:24px}
+      nav{display:flex}.hero{padding:56px 48px}.hero-row{flex-direction:row;align-items:flex-end}.eyebrow{font-size:14px}.hero h1{font-size:90px;white-space:nowrap}.hero-copy-wrap{width:260px}.scroll-cue{display:flex}
+      .drop{padding:160px 48px}.drop-grid{grid-template-columns:repeat(12,minmax(0,1fr));gap:64px}.drop-left{grid-column:span 7}.stats-wrap{grid-column:span 5;padding-top:12px}.drop h2,.form h2{font-size:80px;line-height:.92}.drop-copy{font-size:19px}
+      .form{padding:176px 48px}.form-copy{text-align:right}.release{padding:176px 48px}.release h2{font-size:88px;line-height:.92}
+      footer{border-radius:64px 64px 0 0}.footer-body{padding:96px 48px 40px}.footer-grid{grid-template-columns:repeat(12,minmax(0,1fr));gap:48px}.footer-cta{grid-column:span 5}.footer-links-wrap{grid-column:span 7}.footer-cta h2{font-size:60px}.footer-links{grid-template-columns:repeat(3,1fr);gap:32px}.footer-bottom{margin-top:112px}.copyright{font-size:11px}.footer-brand{flex-wrap:nowrap}
+    }
+    @media(min-width:640px){.footer-links{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:767px){nav{display:none}.footer-bottom{align-items:flex-end}.socials{display:none}}
+  </style>
+</head>
+<body>
+  <div class="gradient-bg" id="gradientBg"></div>
+  <div id="scene-wrap"><canvas id="scene"></canvas></div>
+
+  <div class="loader" id="loader">
+    <div class="loader-inner">
+      <div class="loader-status loader-spring" id="loaderStatus">Calibrating gravity field</div>
+      <div class="progress-track loader-spring"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="loader-counter loader-spring" id="loaderCounter">000%</div>
+    </div>
+  </div>
+
+  <header class="header" id="header">
+    <a class="wordmark" href="#">GRAVITY</a>
+    <nav><a href="#">Works</a><a href="#">Services</a><a href="#">Team</a><a href="#">Story</a><a href="#">Contact</a></nav>
+    <div class="controls-right">
+      <button class="glass-button" id="openDrawer" aria-label="Open studio controls"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg></button>
+      <a class="contact-pill" href="#footer"><span>Contact us</span><span class="orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span></a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="hero">
+      <div class="hero-row">
+        <div class="hero-left">
+          <div class="eyebrow hero-in">[ Digital studio ]</div>
+          <h1 class="hero-in">Less noise. More gravity.</h1>
+        </div>
+        <div class="hero-copy-wrap hero-in">
+          <p class="hero-copy">We design digital experiences that remove distraction and amplify presence.</p>
+          <p class="credit">© 2026 — Independent digital agency</p>
+          <div class="scroll-cue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg><span>Scroll</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="drop">
+      <div class="drop-grid">
+        <div class="drop-left">
+          <div class="mono-label reveal">[ 02 — Physics ]</div>
+          <h2 class="reveal" style="transition-delay:.1s">When structure<br>lets go.</h2>
+          <p class="drop-copy reveal" style="transition-delay:.2s">Keep scrolling and the field surrenders to gravity. Every sphere obeys real simulated physics — mass, momentum, restitution — tumbling down and bouncing off the floor until the energy finally settles.</p>
+        </div>
+        <div class="stats-wrap stats reveal" style="transition-delay:.25s">
+          <article class="stat-card"><div class="stat-inner"><div class="stat-head"><span>01 · Solver</span><span>Verlet</span><span class="stat-dot"></span></div><div class="stat-value">4 sub-steps</div><div class="stat-desc">Stable stacking at 60fps</div></div></article>
+          <article class="stat-card"><div class="stat-inner"><div class="stat-head"><span>02 · Restitution</span><span>0.65 — bouncy</span><span class="stat-dot"></span></div><div class="stat-value">Energy lost</div><div class="stat-desc">Lost on every contact</div></div></article>
+          <article class="stat-card"><div class="stat-inner"><div class="stat-head"><span>03 · Bodies</span><span>Real-time GPU</span><span class="stat-dot"></span></div><div class="stat-value">No pre-baked animation</div><div class="stat-desc">Purely live simulation</div></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="form">
+      <div><div class="mono-label reveal">[ 03 — Form ]</div><h2 class="reveal" style="transition-delay:.1s">Chaos, then form.</h2></div>
+      <div class="form-bottom">
+        <p class="form-copy reveal" style="transition-delay:.15s">Out of free-fall, the field reassembles — every bubble finding its place in a single shape. Move your cursor through it and watch the order ripple, scatter, and recover.</p>
+        <div class="swipe-pill reveal" style="transition-delay:.28s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v8M12 2l-3 3M12 2l3 3"/><path d="M5 12h14v8H5z"/></svg>Swipe through it</div>
+      </div>
+    </section>
+
+    <section class="release">
+      <div class="mono-label reveal">[ 04 — Release ]</div>
+      <h2 class="reveal" style="transition-delay:.12s">And then,<br>weightless.</h2>
+      <p class="release-copy reveal" style="transition-delay:.24s">The whole field lifts off the screen and rushes past you — every sphere accelerating into the lens until nothing remains but light. Less noise.</p>
+    </section>
+  </main>
+
+  <footer id="footer">
+    <div class="footer-glow-one"></div><div class="footer-glow-two"></div>
+    <div class="marquee"><div class="marquee-track"><div class="marquee-group"><span class="marquee-word">Less noise</span><span class="marquee-dot"></span><span class="marquee-word">More gravity</span><span class="marquee-dot"></span><span class="marquee-word">Design with weight</span><span class="marquee-dot"></span><span class="marquee-word">Let's build</span><span class="marquee-dot"></span></div><div class="marquee-group"><span class="marquee-word">Less noise</span><span class="marquee-dot"></span><span class="marquee-word">More gravity</span><span class="marquee-dot"></span><span class="marquee-word">Design with weight</span><span class="marquee-dot"></span><span class="marquee-word">Let's build</span><span class="marquee-dot"></span></div></div></div>
+    <div class="footer-body">
+      <div class="footer-grid">
+        <div class="footer-cta reveal">
+          <div class="footer-label">[ Let's collaborate ]</div>
+          <h2>Have an idea<br>with real weight?</h2>
+          <a class="email-pill" href="mailto:hello@gravity.studio"><span>hello@gravity.studio</span><span class="orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></span></a>
+        </div>
+        <div class="footer-links-wrap footer-links">
+          <div class="footer-column reveal"><div class="link-title">Studio</div><ul><li><a href="#">Works <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></a></li><li><a href="#">Services <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></a></li><li><a href="#">Process <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></a></li><li><a href="#">Careers <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></a></li></ul></div>
+          <div class="footer-column reveal" style="transition-delay:.08s"><div class="link-title">Company</div><ul><li><a href="#">Story <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></a></li><li><a href="#">Team <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></a></li><li><a href="#">Journal <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></a></li><li><a href="#">Contact <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></a></li></ul></div>
+          <div class="footer-column reveal" style="transition-delay:.16s"><div class="link-title">Social</div><ul><li><a href="#">Twitter <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></a></li><li><a href="#">Instagram <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></a></li><li><a href="#">LinkedIn <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></a></li><li><a href="#">Dribbble <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></a></li></ul></div>
+        </div>
+      </div>
+      <div class="footer-bottom"><div class="footer-brand"><span class="wordmark">GRAVITY</span><span class="footer-dot"></span><span class="copyright">© 2026 Digital Studio — All rights reserved.</span></div><div class="socials"><a class="social-button" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C2 15.5.5 9.6 3 5c2.2 2.6 5.5 4.1 9 4-.9-4.2 4-6.6 7-3.8C20 4.2 22 4 22 4z"/></svg></a><a class="social-button" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="18" cy="6" r="1"/></svg></a><a class="social-button" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg></a></div></div>
+    </div>
+  </footer>
+
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer">
+    <div class="drawer-head"><div class="drawer-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/></svg>Studio Controls</div><button class="close-button" id="closeDrawer" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <p class="drawer-note">Set the hero sphere palette. As you scroll, the scene morphs to volt-lime, then rose-pink as the heart assembles.</p>
+    <div class="palette-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.1L5 10l5.1 1.9L12 17l1.9-5.1L19 10l-5.1-1.9L12 3zM19 16l-.7 1.8L16.5 19l1.8.7L19 21.5l.7-1.8L21.5 19l-1.8-1.2L19 16z"/></svg>Hero Palette Shaders</div>
+    <div class="palette-list" id="paletteList"></div>
+    <div class="drawer-footer"><div class="render-row"><span>RENDER ENGINE</span><span>THREE.JS WEBGL</span></div><div class="render-row"><span>DYNAMICS SOLVER</span><span>3D COLLISION VERLET</span></div><button class="reset-button" id="resetPalette"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Reset Defaults</button></div>
+  </aside>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    const palettes=[{id:'roseGold',name:'Royal Blue & Pearl',description:'Hyper-distinct cobalt spheres floating in soft white-slate gradients.',primary:'#2F69FF',ball:'#2F69FF'},{id:'pinkBlush',name:'Rose Blush & Crème',description:'Sweet candy pinks and juicy strawberry accents in a pearl studio.',primary:'#FFA6B3',ball:'#FFC5C2'},{id:'voltLime',name:'Volt Lime & Slate',description:'Electric neon volt-lime against a clean white-slate horizon.',primary:'#E1FC03',ball:'#E1FC03'},{id:'arcticBlue',name:'Arctic Sky & Crystal',description:'Cool arctic crystal blues with a translucent glass sheen.',primary:'#96E5FF',ball:'#96E5FF'}];
+    let selected=palettes[0];
+    const paletteList=document.getElementById('paletteList');
+    function renderPaletteCards(){
+      paletteList.innerHTML='';
+      palettes.forEach(p=>{
+        const b=document.createElement('button');b.className='palette-card'+(p.id===selected.id?' selected':'');
+        b.innerHTML=`<span class="palette-name-row"><span>${p.name}</span><span class="palette-swatch" style="background:${p.primary}"></span></span><span class="palette-desc">${p.description}</span>`;
+        b.onclick=()=>{selected=p;renderPaletteCards();createScene(p.ball)};
+        paletteList.appendChild(b);
+      });
+    }
+    renderPaletteCards();
+    const drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim');
+    function setDrawer(open){drawer.classList.toggle('open',open);scrim.classList.toggle('open',open)}
+    document.getElementById('openDrawer').onclick=()=>setDrawer(true);
+    document.getElementById('closeDrawer').onclick=()=>setDrawer(false);
+    scrim.onclick=()=>setDrawer(false);
+    document.getElementById('resetPalette').onclick=()=>{selected=palettes[0];renderPaletteCards();createScene(selected.ball)};
+
+    const control={progress:0,started:false};
+    const mousePos={x:99,y:99,isDown:false};
+    window.addEventListener('pointermove',e=>{mousePos.x=(e.clientX/window.innerWidth)*2-1;mousePos.y=-(e.clientY/window.innerHeight)*2+1});
+    window.addEventListener('mousedown',()=>mousePos.isDown=true);window.addEventListener('mouseup',()=>mousePos.isDown=false);
+
+    let targetScroll=window.scrollY,scrolling=false;
+    window.addEventListener('wheel',e=>{
+      if(drawer.classList.contains('open'))return;
+      e.preventDefault();targetScroll=THREE.MathUtils.clamp(targetScroll+e.deltaY,0,document.documentElement.scrollHeight-innerHeight);scrolling=true;
+    },{passive:false});
+    function smoothScroll(){
+      if(scrolling){const max=document.documentElement.scrollHeight-innerHeight;targetScroll=THREE.MathUtils.clamp(targetScroll,0,max);window.scrollTo(0,window.scrollY+(targetScroll-window.scrollY)*.09);if(Math.abs(targetScroll-window.scrollY)<.5){window.scrollTo(0,targetScroll);scrolling=false}}
+      requestAnimationFrame(smoothScroll);
+    }smoothScroll();
+
+    const gradient=document.getElementById('gradientBg');
+    let scrollTick=false;
+    function updateScroll(){scrollTick=false;control.progress=window.scrollY/(window.innerHeight||1);const stage=control.progress>1.55?2:control.progress>.7?1:0;if(stage===0)gradient.style.background='radial-gradient(circle at center,#ffffff 0%,#ecefff 35%,#c2d1ff 100%)';else if(stage===1)gradient.style.background='radial-gradient(circle at center,#ffffff 0%,#fbffe5 38%,#e8ff9c 100%)';else gradient.style.background='radial-gradient(circle at center,#ffffff 0%,#fff0f1 38%,#ffd1d5 100%)'}
+    window.addEventListener('scroll',()=>{if(!scrollTick){scrollTick=true;requestAnimationFrame(updateScroll)}});window.addEventListener('resize',()=>{if(!scrollTick){scrollTick=true;requestAnimationFrame(updateScroll)}});
+
+    const revealObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');revealObserver.unobserve(e.target)}})},{threshold:.45});
+    document.querySelectorAll('.reveal').forEach(el=>revealObserver.observe(el));
+
+    let sceneContext=null;
+    function createScene(ballColor){
+      if(sceneContext){cancelAnimationFrame(sceneContext.animationFrameId);sceneContext.renderer.dispose();sceneContext.scene.clear()}
+      const canvas=document.getElementById('scene'),container=document.getElementById('scene-wrap');
+      const scene=new THREE.Scene();
+      const camera=new THREE.PerspectiveCamera(38,container.clientWidth/container.clientHeight,.1,100);camera.position.set(0,0,11);
+      const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setSize(container.clientWidth,container.clientHeight);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+      const hemiLight=new THREE.HemisphereLight(0xffffff,new THREE.Color(ballColor),1.6);scene.add(hemiLight);
+      const keyLight=new THREE.DirectionalLight(0xffffff,1.4);keyLight.position.set(-6,10,8);keyLight.castShadow=true;keyLight.shadow.mapSize.set(2048,2048);keyLight.shadow.camera.near=.5;keyLight.shadow.camera.far=30;keyLight.shadow.camera.left=-8;keyLight.shadow.camera.right=8;keyLight.shadow.camera.top=8;keyLight.shadow.camera.bottom=-8;keyLight.shadow.bias=-.0003;keyLight.shadow.radius=12;scene.add(keyLight);
+      const rimLight=new THREE.DirectionalLight(0xffffff,1.25);rimLight.position.set(8,7,-8);scene.add(rimLight);const frontLight=new THREE.DirectionalLight(0xffffff,.4);frontLight.position.set(0,0,11);scene.add(frontLight);const sideBounceLight=new THREE.DirectionalLight(0xffffff,.3);sideBounceLight.position.set(-9,-2,4);scene.add(sideBounceLight);
+      let viewportWidth=10,viewportHeight=6;
+      const updateFrustumBounds=()=>{const fovRad=THREE.MathUtils.degToRad(camera.fov);viewportHeight=2*Math.tan(fovRad/2)*camera.position.z;viewportWidth=viewportHeight*(container.clientWidth/container.clientHeight)};updateFrustumBounds();
+      const ballCount=window.innerWidth<768?54:96;
+      const getDynamicColors=baseColor=>{const hex=baseColor.toLowerCase();if(hex==='#e1fc03')return{pastel:new THREE.Color('#FBFFE2'),light:new THREE.Color('#EFFE69'),medium:new THREE.Color('#E1FC03'),deep:new THREE.Color('#B1E200'),glass:new THREE.Color('#DCFF32')};if(hex==='#ffc5c2'||hex==='#ffa19e')return{pastel:new THREE.Color('#FFF5F4'),light:new THREE.Color('#FFECEB'),medium:new THREE.Color('#FFA6B3'),deep:new THREE.Color('#FF4D6D'),glass:new THREE.Color('#FFA6B3')};if(hex==='#96e5ff')return{pastel:new THREE.Color('#F0F9FF'),light:new THREE.Color('#C9F1FF'),medium:new THREE.Color('#96E5FF'),deep:new THREE.Color('#2BA5FF'),glass:new THREE.Color('#98E4FF')};if(hex==='#2f69ff')return{pastel:new THREE.Color('#ECEFFF'),light:new THREE.Color('#A8C1FF'),medium:new THREE.Color('#2F69FF'),deep:new THREE.Color('#0A33BF'),glass:new THREE.Color('#4D80FF')};if(hex==='#141414'||hex==='#000000')return{pastel:new THREE.Color('#D8D8D8'),light:new THREE.Color('#555555'),medium:new THREE.Color('#242424'),deep:new THREE.Color('#0A0A0A'),glass:new THREE.Color('#1F1F1F')};const c=new THREE.Color(baseColor);return{pastel:c.clone().offsetHSL(0,-.15,.25),light:c.clone().offsetHSL(0,-.05,.12),medium:c.clone(),deep:c.clone().offsetHSL(.01,.1,-.12),glass:c.clone()}};
+      const palette=getDynamicColors(ballColor),isBlack=['#141414','#18181b','#000000'].includes(ballColor.toLowerCase());
+      const palLime=getDynamicColors('#E1FC03'),palPink=getDynamicColors('#FFC5C2');
+      const ROLES=['pastel','light','medium','deep','glass'],curPal={pastel:new THREE.Color(),light:new THREE.Color(),medium:new THREE.Color(),deep:new THREE.Color(),glass:new THREE.Color()};
+      const sphereGeometry=new THREE.SphereGeometry(1,48,48),balls=[];
+      for(let i=0;i<ballCount;i++){let radius=.33;const rand=Math.random();if(rand<.3)radius=.27+Math.random()*.12;else if(rand<.8)radius=.42+Math.random()*.18;else radius=.66+Math.random()*.21;const mass=Math.pow(radius,3);let chosenColor=palette.medium,role='medium',sphereMat;if(Math.random()<.22&&!isBlack){sphereMat=new THREE.MeshPhysicalMaterial({color:palette.glass,roughness:.08,metalness:0,clearcoat:1,clearcoatRoughness:.03,transmission:.95,ior:1.485,thickness:2.2,specularColor:new THREE.Color('#ffffff'),specularIntensity:1,attenuationColor:palette.pastel,attenuationDistance:1,emissive:palette.glass,emissiveIntensity:.12,transparent:true});chosenColor=palette.glass;role='glass'}else{const cr=Math.random();if(cr<.25){chosenColor=palette.pastel;role='pastel'}else if(cr<.55){chosenColor=palette.light;role='light'}else if(cr<.85){chosenColor=palette.medium;role='medium'}else{chosenColor=palette.deep;role='deep'}sphereMat=new THREE.MeshPhysicalMaterial({color:chosenColor,roughness:.44,metalness:0,clearcoat:.24,clearcoatRoughness:.35,emissive:isBlack?new THREE.Color('#000000'):chosenColor,emissiveIntensity:isBlack?0:.08,transparent:true})}const group=new THREE.Group(),mesh=new THREE.Mesh(sphereGeometry,sphereMat);mesh.scale.setScalar(radius);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);scene.add(group);balls.push({id:i,radius,mass,position:new THREE.Vector3(),velocity:new THREE.Vector3(),meshGroup:group,sphere:mesh,material:sphereMat,role,isGlass:role==='glass',visualScale:radius,restPosition:new THREE.Vector3(),shapeTarget:new THREE.Vector3()})}
+      const meanRadius=balls.reduce((s,b)=>s+b.radius,0)/balls.length;let shapeScale=1;
+      const inHeart=(x,y)=>{const a=x*x+y*y-1;return a*a*a-x*x*y*y*y<=0};
+      function assignHeartTargets(){const S=Math.min(viewportWidth*.30,viewportHeight*.27),baseCY=-viewportHeight*.03;shapeScale=Math.max(.3,Math.min(1,(S*.45/2.3)/meanRadius));balls.forEach(b=>{let x=0,y=0,tries=0;do{x=(Math.random()*2-1)*1.25;y=Math.random()*2.55-1.4;tries++}while(!inHeart(x,y)&&tries<60);b.shapeTarget.set(x*S,(y+.12)*S+baseCY,(Math.random()-.5)*.35)})}assignHeartTargets();
+      function scatterFar(withInwardVelocity){const R=Math.max(viewportWidth,viewportHeight)*1.5;balls.forEach(b=>{const a=Math.random()*Math.PI*2,px=Math.cos(a)*R*1.25,py=Math.sin(a)*R*.85,pz=(Math.random()-0.5)*4;b.position.set(px,py,pz);b.meshGroup.position.copy(b.position);if(withInwardVelocity)b.velocity.set(-px,-py,-pz).normalize().multiplyScalar(.08+Math.random()*.05);else b.velocity.set(0,0,0)})}scatterFar(false);
+      const params={gravity:0,rebound:-.3,mouseRepelForce:.05,mouseRepelRadius:4.4,damping:.91,centerAttractForce:.0035,bounciness:.02};
+      const mouseProjVec=new THREE.Vector3(),mouseWorld3D=new THREE.Vector3();
+      function updateMouse3D(){mouseProjVec.set(mousePos.x,mousePos.y,.5);mouseProjVec.unproject(camera);const dir=mouseProjVec.sub(camera.position).normalize(),distance=-camera.position.z/dir.z;mouseWorld3D.copy(camera.position).add(dir.multiplyScalar(distance))}
+      const clamp01=v=>v<0?0:v>1?1:v,smoothstep=(a,b,x)=>{const t=clamp01((x-a)/(b-a));return t*t*(3-2*t)},lerp=(a,b,t)=>a+(b-a)*t,easeOutCubic=t=>1-Math.pow(1-t,3);
+      const clock=new THREE.Clock();let localStarted=false,entranceStart=0,reportedReady=false,mouseSpeed=0;const diffVec=new THREE.Vector3(),collideDiff=new THREE.Vector3(),relVel=new THREE.Vector3(),deltaPos=new THREE.Vector3(),rotAxis=new THREE.Vector3(),prevMouseWorld=new THREE.Vector3();
+      function simulateAndRender(){sceneContext.animationFrameId=requestAnimationFrame(simulateAndRender);const time=clock.getElapsedTime();clock.getDelta();updateMouse3D();if(control.started&&!localStarted){localStarted=true;entranceStart=time;scatterFar(true)}if(!localStarted){renderer.render(scene,camera);if(!reportedReady){reportedReady=true;onReady()}return}const progress=control.progress??0,heroF=1-smoothstep(.30,.80,progress),dropRaw=smoothstep(.40,.95,progress),flyF=smoothstep(2.7,3.45,progress),shapeF=smoothstep(1.40,2.05,progress)*(1-smoothstep(2.55,3.0,progress)),dropF=dropRaw*(1-smoothstep(1.25,1.75,progress)),bLime=smoothstep(.55,1.05,progress),bPink=smoothstep(1.40,1.95,progress);
+        ROLES.forEach(role=>curPal[role].copy(palette[role]).lerp(palLime[role],bLime).lerp(palPink[role],bPink));hemiLight.groundColor.copy(curPal.medium);const entranceT=easeOutCubic(clamp01((time-entranceStart)/2.2)),attractionBoost=lerp(7.5,1,entranceT),isMouseInteracting=!!mousePos&&(Math.abs(mousePos.x)<.99||Math.abs(mousePos.y)<.99);mouseSpeed=isMouseInteracting?mouseWorld3D.distanceTo(prevMouseWorld):0;if(mouseSpeed>3)mouseSpeed=3;prevMouseWorld.copy(mouseWorld3D);let damping=.91;damping=lerp(damping,.992,dropF);damping=lerp(damping,.90,shapeF);damping=lerp(damping,.985,flyF);const camZ=camera.position.z,clusterActive=Math.max(heroF,entranceT<1?1:0);
+        balls.forEach((b,i)=>{if(heroF>.01){b.velocity.x+=Math.sin(time*.4+b.id*1.5)*.0004*b.radius*heroF;b.velocity.y+=Math.cos(time*.5+b.id*1.2)*.0004*b.radius*heroF;b.velocity.z+=Math.sin(time*.35+b.id)*.0001*heroF}const clusterStrength=params.centerAttractForce*attractionBoost*clusterActive;if(clusterStrength>.00001){b.velocity.x+=(0-b.position.x)*clusterStrength*.38;b.velocity.y+=(0-b.position.y)*clusterStrength*1.85;b.velocity.z+=(0-b.position.z)*clusterStrength*1.8}if(dropF>.001)b.velocity.y-=.011*dropF;if(shapeF>.001){const k=.06*shapeF;b.velocity.x+=(b.shapeTarget.x-b.position.x)*k;b.velocity.y+=(b.shapeTarget.y-b.position.y)*k;b.velocity.z+=(b.shapeTarget.z-b.position.z)*k}if(flyF>.001){const stagger=(b.id*.6180339887)%1,local=smoothstep(stagger*.55,stagger*.55+.45,flyF);b.velocity.z+=.05*local;b.velocity.x+=b.position.x*.006*local;b.velocity.y+=b.position.y*.006*local}if(isMouseInteracting){diffVec.subVectors(b.position,mouseWorld3D);const rawDist=diffVec.length(),down=mousePos.isDown,activeRadius=down?params.mouseRepelRadius*1.4:params.mouseRepelRadius,activeForce=down?params.mouseRepelForce*1.7:params.mouseRepelForce;if(rawDist<activeRadius&&rawDist>.0001){const ratio=rawDist/activeRadius,smoothFactor=1-ratio*ratio*(3-2*ratio),speedBoost=1+mouseSpeed*3.2,push=smoothFactor*activeForce*speedBoost;diffVec.normalize();diffVec.z*=.12;diffVec.normalize();b.velocity.addScaledVector(diffVec,push)}}b.velocity.multiplyScalar(damping);b.position.addScaledVector(b.velocity,1);const c=b.isGlass?curPal.glass:curPal[b.role];b.material.color.copy(c);if(!isBlack)b.material.emissive.copy(c);b.material.opacity=flyF>.001?1-smoothstep(camZ-2.6,camZ-.3,b.position.z):1;const targetVis=b.radius*(1-(1-shapeScale)*shapeF);b.visualScale+=(targetVis-b.visualScale)*.12;b.sphere.scale.setScalar(b.visualScale)});
+        const collideScale=.28*(1-.93*shapeF)*(1-flyF);
+        for(let step=0;step<4;step++){for(let i=0;i<balls.length;i++)for(let j=i+1;j<balls.length;j++){const b1=balls[i],b2=balls[j];collideDiff.subVectors(b2.position,b1.position);const dist=collideDiff.length(),minDist=b1.visualScale+b2.visualScale;if(dist<minDist&&dist>.001){const overlap=minDist-dist;collideDiff.multiplyScalar(1/dist);const total=b1.mass+b2.mass,r1=b2.mass/total,r2=b1.mass/total;b1.position.addScaledVector(collideDiff,-overlap*r1*collideScale);b2.position.addScaledVector(collideDiff,overlap*r2*collideScale);relVel.subVectors(b2.velocity,b1.velocity);const velAlong=relVel.dot(collideDiff);if(velAlong<-.0001){const impulse=-(1+params.bounciness)*velAlong/(1/b1.mass+1/b2.mass);b1.velocity.addScaledVector(collideDiff,-impulse/b1.mass);b2.velocity.addScaledVector(collideDiff,impulse/b2.mass)}}}}
+        const borderPad=.2,xBound=viewportWidth/2-borderPad,topY=viewportHeight/2-.05,floorY=-viewportHeight/2+.05,zBound=2,restitution=.30+.35*dropF,contain=flyF<.5,zContain=flyF<.02;
+        balls.forEach(b=>{const r=b.visualScale;if(contain){if(b.position.x<-xBound-r){b.position.x=-xBound-r;b.velocity.x*=params.rebound}else if(b.position.x>xBound+r){b.position.x=xBound+r;b.velocity.x*=params.rebound}if(b.position.y-r<floorY){b.position.y=floorY+r;if(b.velocity.y<0)b.velocity.y=-b.velocity.y*restitution;if(dropF>.3){b.velocity.x*=.86;b.velocity.z*=.86}}if(b.position.y+r>topY){b.position.y=topY-r;if(b.velocity.y>0)b.velocity.y*=params.rebound}}if(zContain){if(b.position.z<-zBound){b.position.z=-zBound;b.velocity.z*=params.rebound}else if(b.position.z>zBound){b.position.z=zBound;b.velocity.z*=params.rebound}}deltaPos.copy(b.position).sub(b.meshGroup.position);if(deltaPos.lengthSq()>.000001){rotAxis.set(deltaPos.y,-deltaPos.x,0).normalize();const angle=(deltaPos.length()/b.radius)*.95;b.meshGroup.rotateOnWorldAxis(rotAxis,angle)}b.meshGroup.position.copy(b.position)});renderer.render(scene,camera);
+      }
+      sceneContext={scene,renderer,animationFrameId:0};
+      const handleResize=()=>{const w=container.clientWidth,h=container.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);updateFrustumBounds();assignHeartTargets()};new ResizeObserver(handleResize).observe(container);simulateAndRender();
+    }
+
+    let ready=false;
+    function onReady(){ready=true}
+    createScene(selected.ball);
+
+    const loader=document.getElementById('loader'),status=document.getElementById('loaderStatus'),fill=document.getElementById('progressFill'),counter=document.getElementById('loaderCounter');
+    document.querySelectorAll('.loader-spring').forEach((el,i)=>setTimeout(()=>el.classList.add('entered'),100+i*160));
+    let value=0,last=performance.now(),leaving=false,done=false;
+    function loaderLoop(now){const dt=Math.min((now-last)/1000,.05);last=now;if(ready){value+=(100-value)*6*dt;if(value>=99.4)value=100}else value+=(92-value)*1.7*dt;const shown=Math.floor(value);fill.style.width=value+'%';counter.textContent=String(shown).padStart(3,'0')+'%';status.textContent=value>=100?'Entering orbit':'Calibrating gravity field';if(value>=99.9&&ready&&!leaving){leaving=true;setTimeout(()=>{loader.classList.add('leaving')},140);setTimeout(()=>{control.started=true;done=true;document.getElementById('header').classList.add('ready');document.getElementById('hero').classList.add('ready')},660)}if(!done)requestAnimationFrame(loaderLoop)}requestAnimationFrame(loaderLoop);
+  </script>
+</body>
+</html>

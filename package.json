@@ -1,0 +1,10 @@
+{
+  "name": "gravity-studio",
+  "version": "1.0.0",
+  "description": "Scroll-driven digital studio page with a Three.js physics scene.",
+  "private": true,
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "keywords": ["threejs", "webgl", "scroll", "physics", "landing-page"]
+}
